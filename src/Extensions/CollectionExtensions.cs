@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SoundpackLoader;
 
-public static class CollectionExtensions
+internal static class CollectionExtensions
 {
     public static T GetRandom<T>(this IEnumerable<T> vals)
     {

@@ -48,8 +48,6 @@ public class SoundpackLoader : MonoBehaviour
             Directory = dir,
         };
 
-        DebugUtil.Dump(soundpack);
-
         // Load notes from .ogg/.wav files
         StartCoroutine(LoadNoteAudioFilesCoroutine(soundpack, onLoadCompleted, onLoadFailed));
         return soundpack;
@@ -116,9 +114,9 @@ public class SoundpackLoader : MonoBehaviour
                 noteFile,
                 onSuccess: clip =>
                 {
+                    Plugin.Logger.LogInfo($"Putting note {noteName} into idx {i}");
                     soundpack.Notes[i] = clip;
-                    int newLoadedClips = Interlocked.Increment(ref numLoadedClips);
-                    if (NOTE_NAMES.Length == newLoadedClips)
+                    if (NOTE_NAMES.Length == ++numLoadedClips)
                     {
                         // Done loading all notes, add soundpack
                         Plugin.Logger.LogInfo($"Successfully loaded soundpack: {soundpack.Namespace}:{soundpack.Name}");

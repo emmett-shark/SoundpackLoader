@@ -24,14 +24,6 @@ public class Soundpack
 
     public bool IsVanilla => Namespace == "vanilla";
     public string QualifiedName => Namespace + ":" + Name;
-
-
-    public static Soundpack? Find(string nmspace, string name)
-    {
-        return Plugin.Soundpacks.FirstOrDefault(s => s.Namespace == nmspace && s.Name == name);
-    }
-
-    public static ICollection<Soundpack> GetAll() => Plugin.Soundpacks;
 }
 
 internal class SoundpackJsonMetadata

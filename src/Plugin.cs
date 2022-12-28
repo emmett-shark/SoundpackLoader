@@ -1,17 +1,16 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 
 namespace SoundpackLoader;
 
 
-public record MetaData
+internal record MetaData
 {
     public const string PLUGIN_NAME = "SoundpackLoader";
     public const string PLUGIN_GUID = "org.crispykevin.soundpackloader";
@@ -19,20 +18,23 @@ public record MetaData
 }
 
 [BepInPlugin(MetaData.PLUGIN_GUID, MetaData.PLUGIN_NAME, MetaData.PLUGIN_VERSION)]
-public class Plugin : BaseUnityPlugin
+internal class Plugin : BaseUnityPlugin
 {
     public static new ManualLogSource Logger = null!;
-    public static List<Soundpack> Soundpacks = new();
     public static SoundpackLoader Loader = null!;
+    public static ConfigEntry<KeyCode> CycleForwards = null!;
+    public static ConfigEntry<KeyCode> CycleBackwards = null!;
+    public static int Idx = 0;
 
     public Plugin()
     {
         Logger = base.Logger;
     }
 
-
     private void Awake()
     {
+        CycleForwards = Config.Bind("General", "CycleForwards", KeyCode.PageUp);
+        CycleBackwards = Config.Bind("General", "CycleBackwards", KeyCode.PageDown);
         new Harmony(MetaData.PLUGIN_GUID).PatchAll();
         
         Logger.LogInfo($"Plugin {MetaData.PLUGIN_GUID} v{MetaData.PLUGIN_VERSION} is loaded!");
@@ -82,8 +84,6 @@ public class Plugin : BaseUnityPlugin
             var gamePack = bundle
                 .LoadAsset<GameObject>("soundpack" + b.Name)
                 .GetComponent<AudioClipsTromb>();
-            // DebugUtil.Dump(soundpack, LogLevel.Info, $"soundpack '{b.Name}'");
-            // DebugUtil.Dump(soundpack.GetComponent<AudioClipsTromb>());
 
             var soundpackCopy = new Soundpack()
             {
@@ -97,51 +97,57 @@ public class Plugin : BaseUnityPlugin
             for (int i = 0; i < gamePack.tclips.Length; i++)
             {
                 var origClip = gamePack.tclips[i];
-                var newClip = AudioClip.Create(origClip.name, origClip.samples, origClip.channels, origClip.frequency, false);
-                var buf = new float[origClip.samples * origClip.channels];
-                origClip.GetData(buf, 0);
-                newClip.SetData(buf, 0);
-                soundpackCopy.Notes[i] = newClip;
+                soundpackCopy.Notes[i] = AudioUtil.CloneAudioClip(origClip);
             }
-            Plugin.Soundpacks.Add(soundpackCopy);
+            SoundpackManager.AddPack(soundpackCopy);
 
             bundle.Unload(true);
         }
-
     }
 
     void LoadCustomSoundpacks()
     {
-        Plugin.Logger.LogInfo("Loading custom soundpacks...");
+        Logger.LogInfo("Loading custom soundpacks...");
         var dirs = new DirectoryInfo(Path.Combine(Paths.BepInExRootPath, "CustomSoundpacks"))
             .EnumerateDirectories();
+
         foreach (var dir in dirs)
-        {
-            // Load soundpack, then as a callback add it to Soundpacks when done loading
-            Loader.LoadSoundpack(dir, Soundpacks.Add);
-        }
+            SoundpackManager.LoadPack(dir);
     }
 
 }
 
 
 [HarmonyPatch(typeof(GameController))]
-class GameControllerPatch
+internal class GameControllerPatch
 {
-
     [HarmonyPostfix]
     [HarmonyPatch(nameof(GameController.Update))]
     static void PostUpdate(GameController __instance)
     {
         var self = __instance;
-        if (Input.GetKeyDown(KeyCode.F5)) {
-            self.ChangeSoundpack(Plugin.Soundpacks.GetRandom());
+        if (Input.GetKeyDown(Plugin.CycleForwards.Value)) {
+            if (++Plugin.Idx >= SoundpackManager.GetAllPacks().Count())
+                Plugin.Idx = 0;
+            var pack = SoundpackManager.GetAllPacks().ElementAt(Plugin.Idx);
+            self.ChangeSoundpack(pack);
         }
-        if (Input.GetKeyDown(KeyCode.F4))
+        if (Input.GetKeyDown(Plugin.CycleBackwards.Value))
         {
-            self.ChangeSoundpack(Plugin.Soundpacks.Where(x => !x.IsVanilla).GetRandom());
+            if (--Plugin.Idx < 0)
+                Plugin.Idx = SoundpackManager.GetAllPacks().Count() - 1;
+            var pack = SoundpackManager.GetAllPacks().ElementAt(Plugin.Idx);
+            self.ChangeSoundpack(pack);
         }
     }
 
-
+    [HarmonyPrefix]
+    [HarmonyPatch(nameof(GameController.Start))]
+    static void PreStart(GameController __instance)
+    {
+        var self = __instance;
+        int soundsetIdx = self.soundset;
+        var SOUNDSETS = new string[] { "default", "bass", "muted", "eightbit", "club", "fart" };
+        SoundpackManager.CurrentPack = SoundpackManager.FindPack("vanilla", SOUNDSETS[soundsetIdx]);
+    }
 }

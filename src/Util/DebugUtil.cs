@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SoundpackLoader;
 
-public class DebugUtil
+internal class DebugUtil
 {
     public static void Dump(object? obj, LogLevel level = LogLevel.Info, [CallerArgumentExpression(nameof(obj))] string objExpression = "<unknown>")
     {

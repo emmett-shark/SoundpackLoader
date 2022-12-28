@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SoundpackLoader;
 
-public class JsonUtil
+internal class JsonUtil
 {
     public static T? ReadFile<T>(FileInfo file) where T: class
     {
