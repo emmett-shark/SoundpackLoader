@@ -23,10 +23,21 @@ public class SoundpackManager
     }
     public static void AddPack(Soundpack pack) => soundpacks.Add(pack);
     public static bool RemovePack(Soundpack pack) => soundpacks.Remove(pack);
+
+    /// <summary>
+    /// <para>Begins loading the soundpack in the given directory.</para>
+    /// <para>On success, the pack is added to the custom pack registry. On failure, no action is taken.</para>
+    /// <para>For more control, see <seealso cref="SoundpackLoader.LoadSoundpack"/></para>
+    /// </summary>
+    /// <param name="dir"></param>
     public static void LoadPack(DirectoryInfo dir)
     {
         Plugin.Loader.LoadSoundpack(dir, AddPack, err => Plugin.Logger.LogWarning($"Failed to load pack from {dir.Name}: {err}"));
     }
+
+    /// <summary>
+    /// See <see cref="LoadPack(DirectoryInfo)"/>.
+    /// </summary>
     public static void LoadPack(string directoryPath)
     {
         LoadPack(new DirectoryInfo(directoryPath));
@@ -42,6 +53,13 @@ public class SoundpackManager
         }
         return null;
     }
+
+    /// <summary>
+    /// Copies and returns a deep clone of the given Soundpack.
+    /// </summary>
+    /// <remarks>WARNING: The copy must be destroyed using <seealso cref="UnityEngine.Object.Destroy(UnityEngine.Object)"/> when finished, or huge memory leaks will occur.</remarks>
+    /// <param name="pack">Pack to clone.</param>
+    /// <returns>Deep clone of <paramref name="pack"/></returns>
     public static Soundpack ClonePack(Soundpack pack)
     {
         var clone = new Soundpack()
@@ -51,13 +69,19 @@ public class SoundpackManager
             Directory = pack.Directory,
             VolumeModifier = pack.VolumeModifier,
         };
+        var buf = new float[pack.Notes.Max(n => n.channels * n.samples)]; // reuse buffer for all clips, make it size of biggest clip
         for (int i = 0; i < pack.Notes.Length; ++i)
         {
-            clone.Notes[i] = AudioUtil.CloneAudioClip(pack.Notes[i]);
+            clone.Notes[i] = AudioUtil.CloneAudioClip(pack.Notes[i], buf);
         }
         return clone;
     }
 
+    /// <summary>
+    /// Changes the in-game <c>Soundpack</c> to the given one.
+    /// </summary>
+    /// <param name="gc">Reference to <c>GameController</c> (from Harmony patch)</param>
+    /// <param name="soundpack">New <c>Soundpack</c> to use</param>
     public static void ChangePack(GameController gc, Soundpack soundpack)
     {
         gc.trombclips.tclips = soundpack.Notes;

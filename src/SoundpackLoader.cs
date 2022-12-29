@@ -10,17 +10,25 @@ using System.IO;
 using BepInEx.Logging;
 using Newtonsoft.Json;
 using System.Threading;
+using Steamworks;
+using System.ComponentModel;
 
 namespace SoundpackLoader;
 
+/// <summary>
+/// Asynchronously loads custom soundpacks using Unity coroutines. Can be used for advanced custom loading behaviour, but most likely you
+/// want <seealso cref="SoundpackManager.LoadPack(DirectoryInfo)"/> instead.
+/// </summary>
 public class SoundpackLoader : MonoBehaviour
 {
-    /**
-     * Loads the metadata for a soundpack from the given directory.
-     * In the background, the note audio files will be loaded, and upon completion,
-     *    the onLoadCompleted callback will be called.
-     * Returns: A partially-loaded soundpack (contains no note audio clips!)
-     */
+    /// <summary>
+    /// Loads the metadata for a soundpack from the given directory.
+    /// In the background, the note audio files will be loaded.
+    /// </summary>
+    /// <param name="dir">Directory to load soundpack from.</param>
+    /// <param name="onLoadCompleted">Callback to run when loading is successfully completed.</param>
+    /// <param name="onLoadFailed">Callback to run when loading fails.</param>
+    /// <returns>A partially-loaded soundpack (contains no note audio clips!)</returns>
     public Soundpack? LoadSoundpack(DirectoryInfo dir, Action<Soundpack>? onLoadCompleted = null, Action<string>? onLoadFailed = null)
     {
         var jsonFile = dir.GetFiles("*.json").FirstOrDefault();

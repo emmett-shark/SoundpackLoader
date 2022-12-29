@@ -95,10 +95,11 @@ internal class Plugin : BaseUnityPlugin
             };
 
             // Copy vanilla audio clips to new ones
+            var buf = new float[gamePack.tclips.Max(clip => clip.samples * clip.channels)];
             for (int i = 0; i < gamePack.tclips.Length; i++)
             {
                 var origClip = gamePack.tclips[i];
-                soundpackCopy.Notes[i] = AudioUtil.CloneAudioClip(origClip);
+                soundpackCopy.Notes[i] = AudioUtil.CloneAudioClip(origClip, buf);
             }
             SoundpackManager.AddPack(soundpackCopy);
 
