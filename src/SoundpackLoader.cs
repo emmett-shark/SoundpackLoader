@@ -94,6 +94,8 @@ public class SoundpackLoader : MonoBehaviour
         bool isWaiting = false;
         string? errorMsg = null;
 
+        Plugin.Logger.LogInfo(soundpack.QualifiedName);
+
         // Load C1 into index 0, D1 into index 1, etc.
         for (int i = 0; i < NOTE_NAMES.Length; ++i)
         {
@@ -110,16 +112,17 @@ public class SoundpackLoader : MonoBehaviour
                 yield break;
             }
 
+            int idx = i; // Capture i in lambda by copy instead of ref
             StartCoroutine(GetAudioClipCoroutine(
                 noteFile,
                 onSuccess: clip =>
                 {
-                    Plugin.Logger.LogInfo($"Putting note {noteName} into idx {i}");
-                    soundpack.Notes[i] = clip;
+                    Plugin.Logger.LogInfo($"Putting note {noteName} into idx {idx}");
+                    soundpack.Notes[idx] = clip;
                     if (NOTE_NAMES.Length == ++numLoadedClips)
                     {
                         // Done loading all notes, add soundpack
-                        Plugin.Logger.LogInfo($"Successfully loaded soundpack: {soundpack.Namespace}:{soundpack.Name}");
+                        Plugin.Logger.LogInfo($"Successfully loaded soundpack: {soundpack.QualifiedName}");
                         if (onCompleted != null)
                             onCompleted(soundpack);
                     }

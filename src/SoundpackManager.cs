@@ -11,16 +11,8 @@ public class SoundpackManager
 {
     private static List<Soundpack> soundpacks = new();
 
-    private static Soundpack _currentPack = new();
-    public static Soundpack CurrentPack
-    {
-        get => _currentPack;
-        internal set
-        {
-            _currentPack = value;
-            Plugin.Logger.LogInfo(value.QualifiedName);
-        }
-    }
+    public static Soundpack CurrentPack { get; internal set; } = new();
+    public static event EventHandler<SoundpackChangedEventArgs> SoundpackChanged;
 
     public static IEnumerable<Soundpack> GetAllPacks() => soundpacks;
     public static IEnumerable<Soundpack> GetVanillaPacks() => GetAllPacks().Where(p => p.IsVanilla);
@@ -29,10 +21,8 @@ public class SoundpackManager
     {
         return soundpacks.FirstOrDefault(s => s.Namespace == nmspace && s.Name == name);
     }
-    public static void AddPack(Soundpack pack)
-    {
-        soundpacks.Add(pack);
-    }
+    public static void AddPack(Soundpack pack) => soundpacks.Add(pack);
+    public static bool RemovePack(Soundpack pack) => soundpacks.Remove(pack);
     public static void LoadPack(DirectoryInfo dir)
     {
         Plugin.Loader.LoadSoundpack(dir, AddPack, err => Plugin.Logger.LogWarning($"Failed to load pack from {dir.Name}: {err}"));
@@ -68,10 +58,12 @@ public class SoundpackManager
         return clone;
     }
 
-    public static void ChangeSoundpack(GameController gc, Soundpack soundpack)
+    public static void ChangePack(GameController gc, Soundpack soundpack)
     {
         gc.trombclips.tclips = soundpack.Notes;
         gc.trombvol_default = gc.trombvol_current = gc.currentnotesound.volume = soundpack.VolumeModifier;
+        var oldPack = CurrentPack;
         CurrentPack = soundpack;
+        SoundpackChanged?.Invoke(null, new SoundpackChangedEventArgs(CurrentPack, oldPack));
     }
 }

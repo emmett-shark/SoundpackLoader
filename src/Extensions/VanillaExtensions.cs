@@ -8,8 +8,8 @@ namespace SoundpackLoader;
 
 public static class VanillaExtensions
 {
-    public static void ChangeSoundpack(this GameController self, Soundpack soundpack)
+    public static void ChangePack(this GameController self, Soundpack soundpack)
     {
-        SoundpackManager.ChangeSoundpack(self, soundpack);
+        SoundpackManager.ChangePack(self, soundpack);
     }
 }

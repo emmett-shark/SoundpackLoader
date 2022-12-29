@@ -24,7 +24,7 @@ internal class Plugin : BaseUnityPlugin
     public static SoundpackLoader Loader = null!;
     public static ConfigEntry<KeyCode> CycleForwards = null!;
     public static ConfigEntry<KeyCode> CycleBackwards = null!;
-    public static int Idx = 0;
+    public static int Idx = 2; // As of right now soundpackloader stores the vanilla soundpacks from asset bundles in file name order, so default is idx 2
 
     public Plugin()
     {
@@ -38,6 +38,7 @@ internal class Plugin : BaseUnityPlugin
         new Harmony(MetaData.PLUGIN_GUID).PatchAll();
         
         Logger.LogInfo($"Plugin {MetaData.PLUGIN_GUID} v{MetaData.PLUGIN_VERSION} is loaded!");
+        SoundpackManager.SoundpackChanged += (_, e) => Logger.LogInfo($"{e.OldPack} -> {e.NewPack}");
 
     }
 
@@ -103,6 +104,12 @@ internal class Plugin : BaseUnityPlugin
 
             bundle.Unload(true);
         }
+
+        var defPack = SoundpackManager.FindPack("vanilla", "default");
+        if (defPack != null)
+            SoundpackManager.CurrentPack = defPack;
+        else
+            Logger.LogWarning("Default soundpack not found, very bad things will happen");
     }
 
     void LoadCustomSoundpacks()
@@ -130,14 +137,16 @@ internal class GameControllerPatch
             if (++Plugin.Idx >= SoundpackManager.GetAllPacks().Count())
                 Plugin.Idx = 0;
             var pack = SoundpackManager.GetAllPacks().ElementAt(Plugin.Idx);
-            self.ChangeSoundpack(pack);
+            self.ChangePack(pack);
+            Plugin.Logger.LogInfo(Plugin.Idx);
         }
         if (Input.GetKeyDown(Plugin.CycleBackwards.Value))
         {
             if (--Plugin.Idx < 0)
                 Plugin.Idx = SoundpackManager.GetAllPacks().Count() - 1;
             var pack = SoundpackManager.GetAllPacks().ElementAt(Plugin.Idx);
-            self.ChangeSoundpack(pack);
+            self.ChangePack(pack);
+            Plugin.Logger.LogInfo(Plugin.Idx);
         }
     }
 

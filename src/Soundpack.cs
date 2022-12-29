@@ -24,6 +24,8 @@ public class Soundpack
 
     public bool IsVanilla => Namespace == "vanilla";
     public string QualifiedName => Namespace + ":" + Name;
+
+    public override string ToString() => QualifiedName;
 }
 
 internal class SoundpackJsonMetadata
