@@ -41,7 +41,10 @@ public class SoundpackLoader : MonoBehaviour
         // Load metadata from .json file
         var metadata = JsonUtil.ReadFile<SoundpackJsonMetadata>(jsonFile);
         if (metadata == null)
+        {
+            Plugin.Logger.LogWarning($"Failed to read JSON file: {jsonFile.FullName}");
             return null;
+        }
 
         if (metadata.SoundpackFormatRevision == -1)
         {
@@ -125,7 +128,6 @@ public class SoundpackLoader : MonoBehaviour
                 noteFile,
                 onSuccess: clip =>
                 {
-                    Plugin.Logger.LogInfo($"Putting note {noteName} into idx {idx}");
                     soundpack.Notes[idx] = clip;
                     if (NOTE_NAMES.Length == ++numLoadedClips)
                     {

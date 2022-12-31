@@ -19,11 +19,14 @@ namespace SoundpackLoader
             // Since Unity has poor API design and doesn't let you specify the number of samples in SetData/GetData,
             // I call an internal private method. Otherwise, it spams console with warnings about buffer size
 
-            //private static extern bool GetData(AudioClip clip, [Out] float[] data, int numSamples, int samplesOffset);
-            typeof(AudioClip).CallStaticMethod<object>("GetData", new object[] { clip, buf, clip.samples, 0 });
+            var functionCallParams = new object[] { clip, buf, clip.samples, 0 };
 
+            //private static extern bool GetData(AudioClip clip, [Out] float[] data, int numSamples, int samplesOffset);
+            typeof(AudioClip).CallStaticMethod<bool>("GetData", functionCallParams);
+
+            functionCallParams[0] = newClip;
             // private static extern bool SetData(AudioClip clip, float[] data, int numsamples, int samplesOffset);
-            typeof(AudioClip).CallStaticMethod<object>("SetData", new object[] { newClip, buf, clip.samples, 0 });
+            typeof(AudioClip).CallStaticMethod<bool>("SetData", functionCallParams);
 
             return newClip;
         }

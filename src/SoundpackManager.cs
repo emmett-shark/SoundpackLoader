@@ -9,10 +9,25 @@ namespace SoundpackLoader;
 
 public class SoundpackManager
 {
-    private static List<Soundpack> soundpacks = new();
+    internal static List<Soundpack> soundpacks = new();
+    internal static readonly string[] VANILLA_SOUNDPACK_NAMES = { "default", "bass", "muted", "eightbit", "club", "fart" };
 
-    public static Soundpack CurrentPack { get; internal set; } = new();
-    public static event EventHandler<SoundpackChangedEventArgs> SoundpackChanged;
+    internal static Soundpack _currentPack = new(); // initialized to vanilla:default once it's loaded
+    public static Soundpack CurrentPack
+    {
+        get => _currentPack;
+        set
+        {
+            var prevPack = _currentPack;
+            _currentPack = value;
+            if (!ReferenceEquals(prevPack, _currentPack))
+            {
+                OnSoundpackChanged(_currentPack, prevPack);
+            }
+        }
+    }
+
+    public static event EventHandler<SoundpackChangedEventArgs>? SoundpackChanged;
 
     public static IEnumerable<Soundpack> GetAllPacks() => soundpacks;
     public static IEnumerable<Soundpack> GetVanillaPacks() => GetAllPacks().Where(p => p.IsVanilla);
@@ -86,8 +101,11 @@ public class SoundpackManager
     {
         gc.trombclips.tclips = soundpack.Notes;
         gc.trombvol_default = gc.trombvol_current = gc.currentnotesound.volume = soundpack.VolumeModifier;
-        var oldPack = CurrentPack;
         CurrentPack = soundpack;
+    }
+
+    internal static void OnSoundpackChanged(Soundpack newPack, Soundpack oldPack)
+    {
         SoundpackChanged?.Invoke(null, new SoundpackChangedEventArgs(CurrentPack, oldPack));
     }
 }
