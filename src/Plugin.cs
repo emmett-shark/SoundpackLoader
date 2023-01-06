@@ -17,7 +17,7 @@ internal record MetaData
 {
     public const string PLUGIN_NAME = "SoundpackLoader";
     public const string PLUGIN_GUID = "org.crispykevin.soundpackloader";
-    public const string PLUGIN_VERSION = "1.0.0";
+    public const string PLUGIN_VERSION = "0.1.0";
 }
 
 [BepInPlugin(MetaData.PLUGIN_GUID, MetaData.PLUGIN_NAME, MetaData.PLUGIN_VERSION)]

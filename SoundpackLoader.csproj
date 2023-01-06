@@ -4,7 +4,7 @@
     <TargetFramework>net4.8.1</TargetFramework>
     <AssemblyName>SoundpackLoader</AssemblyName>
     <Description>Loads custom soundpacks</Description>
-    <Version>1.0.0</Version>
+    <Version>0.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	<Nullable>enable</Nullable>
 	<LangVersion>latest</LangVersion>
