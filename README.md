@@ -3,12 +3,42 @@
 An early WIP mod for loading custom soundpacks into the game.
 
 # For users
-Install the mod by going to the releases tab on the right side. Download SoundpackLoader.dll and drop it in your plugins folder.
-Upon launching the game, a CustomSoundpacks folder should appear in the BepInEx folder. Put your soundpacks here and relaunch.
+Download the mod by going to the releases tab on the right side of this page. Download SoundpackLoader.dll and drop it in your plugins folder.
+Upon launching the game, a CustomSoundpacks folder should appear in the BepInEx folder. Put your soundpacks there and relaunch.
+
+The current interface is a bit rough -- on the "Choose Yer Tromboner" screen, the selected soundpack is written at the bottom of the screen. Cycle through soundpacks using PageUp and PageDown. You can also cycle through soundpacks while playing a song. The keys can be changed in the config text file in `TromboneChamp\BepInEx\config\org.crispykevin.soundpackloader.cfg`.
+
+### Soundpack structure
+Making a soundpack is simple. It's just fifteen audio files of the notes of the C major scale, from C1 to C3. Additionally, some information about the pack is given in a special text format (JSON).
+
+![Screenshot 2023-01-06 141928](https://user-images.githubusercontent.com/77177424/211094213-84b04b01-8e01-4ba5-b91f-d371ab09d66b.png)
+
+Currently, not much is in the .json file:
+
+
+| Attribute     | Description   | Required?  |
+| ------------- | ------------- | ---------- |
+| SoundpackFormatRevision  | Indicates which version of the soundpack specification this soundpack was designed for. Right now, always set this to 1.  | true |
+| Name | Name of the soundpack  | true |
+| Namespace | Another name/identifier used in case there's two soundpacks with the same name. | true |
+| VolumeModifier | Multiplier to adjust the trombone volume while using the soundpack (0.0-1.0) | false, default = 1.0 |
+
+```
+{
+    "SoundpackFormatRevision": 1,
+    "Name": "cello-lower",
+    "Namespace": "crispykevin",
+    "VolumeModifier": 1.0
+}
+```
+
+Other notes:
+- A soundpack must have fifteen audio files, each matching `"*{noteName}.*"` (file glob, not regex) (e.g. "my_cool_C2.wav" is acceptable)
+- Currently, .ogg and .wav audio files are supported.
 
 # For modders
 
-## API Overview
+### API Overview
 SoundpackLoader provides an API to conveniently control soundpacks in-game. Almost everything you need will be in the SoundpackManager class.
 
 - Get a Soundpack instance using `SoundpackManager.FindPack`, `GetAllPacks`, `GetVanillaPacks`, and `GetCustomPacks`.
@@ -17,7 +47,7 @@ SoundpackLoader provides an API to conveniently control soundpacks in-game. Almo
 - To add/remove/load songs dynamically (besides the ones in CustomSoundpacks folder), use `SoundpackManager.AddPack`, `RemovePack`, and `LoadPack`.
 - To do something whenever the soundpack changes, subscribe to `SoundpackManager.SoundpackChanged`. The event args provide the old and new packs.
 
-## Setup
+### Setup
 Add a reference to SoundpackLoader's DLL in your project's DLL. To do this, add another `<Reference>` in your .csproj file:
 ```
   <ItemGroup>
@@ -33,7 +63,7 @@ Add a reference to SoundpackLoader's DLL in your project's DLL. To do this, add 
   </ItemGroup>
   ```
   
-## Code examples
+### Code examples
 Change the soundpack before every note (see https://github.com/crispyross/SoundpackChaos):
 
 ```
