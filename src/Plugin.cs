@@ -145,8 +145,8 @@ internal class Plugin : BaseUnityPlugin
     void LoadCustomSoundpacks()
     {
         Logger.LogInfo("Loading custom soundpacks...");
-        var dirs = new DirectoryInfo(Path.Combine(Paths.BepInExRootPath, "CustomSoundpacks"))
-            .EnumerateDirectories();
+        var customDir = Directory.CreateDirectory(Path.Combine(Paths.BepInExRootPath, "CustomSoundpacks"));
+        var dirs = customDir.EnumerateDirectories();
 
         foreach (var dir in dirs)
             SoundpackManager.LoadPack(dir);
