@@ -3,10 +3,10 @@
 An early WIP mod for loading custom soundpacks into the game.
 
 # For users
-Download SoundpackLoader.dll from [here](https://github.com/crispyross/SoundpackLoader/releases) and drop it in your plugins folder.
+Download SoundpackLoader.dll from [here](https://github.com/emmett-shark/SoundpackLoader/releases/latest) and drop it in your plugins folder.
 Upon launching the game, a CustomSoundpacks folder should appear in the BepInEx folder. Put your soundpacks there and relaunch.
 
-The current interface is a bit rough -- on the "Choose Yer Tromboner" screen, the selected soundpack is written at the bottom of the screen. Cycle through soundpacks using PageUp and PageDown. You can also cycle through soundpacks while playing a song. The keys can be changed in the config text file in `TromboneChamp\BepInEx\config\org.crispykevin.soundpackloader.cfg`.
+The current interface is a bit rough -- on the "Choose Yer Tromboner" screen, the selected soundpack is written at the top of the screen. Cycle through soundpacks using PageUp and PageDown. You can also cycle through soundpacks while playing a song. The keys can be changed in the config text file in `TromboneChamp\BepInEx\config\org.crispykevin.soundpackloader.cfg`.
 
 ### Soundpack structure
 Making a soundpack is simple. It's just fifteen audio files of the notes of the C major scale, from C1 to C3. Additionally, some information about the pack is given in a special text format (JSON).
