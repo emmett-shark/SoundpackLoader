@@ -12,22 +12,14 @@ using UnityEngine.UI;
 
 namespace SoundpackLoader;
 
-
-internal record MetaData
-{
-    public const string PLUGIN_NAME = "SoundpackLoader";
-    public const string PLUGIN_GUID = "org.crispykevin.soundpackloader";
-    public const string PLUGIN_VERSION = "0.1.0";
-}
-
-[BepInPlugin(MetaData.PLUGIN_GUID, MetaData.PLUGIN_NAME, MetaData.PLUGIN_VERSION)]
+[BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
 internal class Plugin : BaseUnityPlugin
 {
     public static new ManualLogSource Logger = null!;
     public static SoundpackLoader Loader = null!;
     public static ConfigEntry<KeyCode> CycleForwards = null!;
     public static ConfigEntry<KeyCode> CycleBackwards = null!;
-    public static int SelectedIdx = 2; // As of right now soundpackloader stores the vanilla soundpacks from asset bundles in file name order, so default is idx 2
+    public static ConfigEntry<int> SelectedIdx = null!;
 
     public Plugin()
     {
@@ -38,10 +30,11 @@ internal class Plugin : BaseUnityPlugin
     {
         CycleForwards = Config.Bind("General", "CycleForwards", KeyCode.PageDown);
         CycleBackwards = Config.Bind("General", "CycleBackwards", KeyCode.PageUp);
-        new Harmony(MetaData.PLUGIN_GUID).PatchAll();
-        
-        Logger.LogInfo($"Plugin {MetaData.PLUGIN_GUID} v{MetaData.PLUGIN_VERSION} is loaded!");
-        SoundpackManager.SoundpackChanged += (_, e) => Logger.LogInfo($"{e.NewPack} (from {e.OldPack})");
+        SelectedIdx = Config.Bind("General", "Soundpack Index", 0);
+        new Harmony(PluginInfo.PLUGIN_GUID).PatchAll();
+
+        Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} v{PluginInfo.PLUGIN_VERSION} is loaded!");
+        SoundpackManager.SoundpackChanged += (_, e) => Logger.LogInfo($"{SelectedIdx.Value}. {e.NewPack}");
     }
 
     void Start()
@@ -55,52 +48,24 @@ internal class Plugin : BaseUnityPlugin
         {
             int idx = SoundpackManager.soundpacks.IndexOf(e.NewPack);
             if (idx != -1)
-                SelectedIdx = idx;
+                SelectedIdx.Value = idx;
         };
-    }
-
-    void Update()
-    {
-        if (Input.GetKeyDown(CycleForwards.Value))
-        {
-            if (++SelectedIdx >= SoundpackManager.soundpacks.Count)
-                SelectedIdx = 0;
-            var pack = SoundpackManager.soundpacks[SelectedIdx];
-            SoundpackManager.CurrentPack = pack;
-            DebugUtil.Dump(SelectedIdx);
-        }
-        if (Input.GetKeyDown(CycleBackwards.Value))
-        {
-            if (--SelectedIdx < 0)
-                SelectedIdx = SoundpackManager.soundpacks.Count - 1;
-            var pack = SoundpackManager.soundpacks[SelectedIdx];
-            SoundpackManager.CurrentPack = pack;
-            DebugUtil.Dump(SelectedIdx);
-        }
     }
 
     void LoadVanillaSoundpacks()
     {
-        // Extracted from GameController.loadSoundBundleResources
-        var VANILLA_VOLUME_MODIFIERS = new Dictionary<string, float>
-        {
-            ["default"] = 1.0f,
-            ["bass"] = 0.72f,
-            ["muted"] = 0.34f,
-            ["eightbit"] = 0.25f,
-            ["club"] = 0.25f,
-            ["fart"] = 0.75f,
-        };
-
         Logger.LogInfo("Loading vanilla soundpacks...");
         var info = new DirectoryInfo(Path.Combine(Application.streamingAssetsPath, "soundpacks"));
+        // ["soundpackbass", "soundpackdefault"] turns into [{Name: "bass", BundlePath: @"C:\Whatever"}, etc.]
         var bundles = info.GetFiles()
             .Where(file => file.Extension == "") // ignore .manifest files
             .Select(file => new
             {
                 Name = file.Name.Substring("soundpack".Length),
                 BundlePath = file.FullName
-            }); // ["soundpackbass", "soundpackdefault"] turns into [{Name: "bass", BundlePath: @"C:\Whatever"}, etc.]
+            })
+            .OrderBy(i => SoundpackManager.VANILLA_SOUNDPACK_INFO.ContainsKey(i.Name)
+                ? SoundpackManager.VANILLA_SOUNDPACK_INFO[i.Name].order : int.MaxValue);
 
         // Must do this sequentially or Unity will error out
         foreach (var b in bundles)
@@ -119,7 +84,8 @@ internal class Plugin : BaseUnityPlugin
             {
                 Name = b.Name,
                 Namespace = "vanilla",
-                VolumeModifier = VANILLA_VOLUME_MODIFIERS.GetValueOrDefault(b.Name, 1.0f),
+                VolumeModifier = SoundpackManager.VANILLA_SOUNDPACK_INFO.ContainsKey(b.Name)
+                    ? SoundpackManager.VANILLA_SOUNDPACK_INFO[b.Name].volume : 1.0f,
                 Directory = info
             };
 
@@ -134,24 +100,17 @@ internal class Plugin : BaseUnityPlugin
 
             bundle.Unload(true);
         }
-
-        var defPack = SoundpackManager.FindPack("vanilla", "default");
-        if (defPack != null)
-            SoundpackManager._currentPack = defPack;
-        else
-            Logger.LogWarning("Default soundpack not found, very bad things will happen");
     }
 
     void LoadCustomSoundpacks()
     {
         Logger.LogInfo("Loading custom soundpacks...");
-        var customDir = Directory.CreateDirectory(Path.Combine(Paths.BepInExRootPath, "CustomSoundpacks"));
-        var dirs = customDir.EnumerateDirectories();
+        var dirs = new DirectoryInfo(Path.Combine(Paths.BepInExRootPath, "CustomSoundpacks"))
+            .EnumerateDirectories();
 
         foreach (var dir in dirs)
             SoundpackManager.LoadPack(dir);
     }
-
 }
 
 
@@ -197,35 +156,43 @@ internal class GameControllerPatch
         GameObject.Destroy(TrombClipsHolder);
         TrombClipsHolder = null;
     }
-
 }
 
-[HarmonyPatch(typeof(CharSelectController))]
+[HarmonyPatch(typeof(CharSelectController_new))]
 internal class CharSelectControllerPatch
 {
     static GameObject soundpackTextHolder = null!;
     static Text soundpackText = null!;
+    static int soundpackIndex = 0;
+
+    [HarmonyPrefix]
+    [HarmonyPatch(nameof(CharSelectController_new.Start))]
+    static void BeforeStart()
+    {
+        soundpackIndex = Plugin.SelectedIdx.Value;
+    }
 
     [HarmonyPostfix]
-    [HarmonyPatch(nameof(CharSelectController.Start))]
-    static void AfterStart(CharSelectController __instance)
+    [HarmonyPatch(nameof(CharSelectController_new.Start))]
+    static void AfterStart(CharSelectController_new __instance)
     {
         Plugin.Logger.LogInfo("AfterStart");
+        __instance.chooseSoundPack(soundpackIndex);
 
-        GameObject characterNameTextHolder = __instance.allcharacterportraits[0].transform.GetChild(4).gameObject; // wtf??
-        soundpackTextHolder = UnityEngine.Object.Instantiate(characterNameTextHolder, Vector3.zero, Quaternion.identity, GameObject.Find("Canvas").transform);
+        GameObject sfxNameTextHolder = __instance.all_sfx_buttons[0].img_text.gameObject; // Finds an existing text object that can be copied for the plugin UI.
+        soundpackTextHolder = UnityEngine.Object.Instantiate(sfxNameTextHolder, Vector3.zero, Quaternion.identity, GameObject.Find("Canvas").transform);
         soundpackTextHolder.SetActive(true);
 
         soundpackText = soundpackTextHolder.GetComponent<Text>();
-        //if (GlobalVariables.chosen_character >= 4)
-        //    DebugUtil.Dump(soundpackText);
 
-        soundpackText.text = SoundpackManager.CurrentPack.Name;
-        soundpackText.transform.GetChild(0).GetComponent<Text>().text = SoundpackManager.CurrentPack.Name; // set shadow text
-        soundpackText.rectTransform.anchorMin = new Vector2(0, 0);
-        soundpackText.rectTransform.anchorMax = new Vector2(1, 0);
-        soundpackText.rectTransform.offsetMin = new Vector2(0, -20 + 10);
-        soundpackText.rectTransform.offsetMax = new Vector2(0, 20 + 10);
+        string name = SoundpackManager.CurrentPack.Name;
+        soundpackText.text = name;
+        soundpackText.transform.GetChild(0).GetComponent<Text>().text = name; // set shadow text
+        soundpackText.rectTransform.anchorMin = new Vector2(0.7f, 1);
+        soundpackText.rectTransform.anchorMax = new Vector2(1, 1);
+        soundpackText.rectTransform.offsetMin = new Vector2(0, -75);
+        soundpackText.rectTransform.offsetMax = new Vector2(0, -75);
+        soundpackText.rectTransform.localScale = new Vector3(0.6f, 0.6f, 1);
         soundpackText.alignment = TextAnchor.LowerCenter;
 
         SoundpackManager.SoundpackChanged += OnSoundpackChanged;
@@ -238,8 +205,26 @@ internal class CharSelectControllerPatch
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(nameof(CharSelectController.navAway))]
-    static void OnNavStart(CharSelectController __instance)
+    [HarmonyPatch(nameof(CharSelectController_new.Update))]
+    static void Update(CharSelectController_new __instance)
+    {
+        if (Input.GetKeyDown(Plugin.CycleForwards.Value))
+        {
+            if (++Plugin.SelectedIdx.Value >= SoundpackManager.soundpacks.Count)
+                Plugin.SelectedIdx.Value = 0;
+            __instance.chooseSoundPack(Plugin.SelectedIdx.Value);
+        }
+        if (Input.GetKeyDown(Plugin.CycleBackwards.Value))
+        {
+            if (--Plugin.SelectedIdx.Value < 0)
+                Plugin.SelectedIdx.Value = SoundpackManager.soundpacks.Count - 1;
+            __instance.chooseSoundPack(Plugin.SelectedIdx.Value);
+        }
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(nameof(CharSelectController_new.loadNextScene))]
+    static void OnLeaveSelectScreen(CharSelectController_new __instance)
     {
         Plugin.Logger.LogInfo("Cleaning up char select screen");
         soundpackTextHolder.SetActive(false);
@@ -247,16 +232,18 @@ internal class CharSelectControllerPatch
         SoundpackManager.SoundpackChanged -= OnSoundpackChanged;
     }
 
-    [HarmonyPostfix]
-    [HarmonyPatch(nameof(CharSelectController.selectSound))]
-    static void AfterSelectSound(CharSelectController __instance, int soundindex, bool selected)
+    [HarmonyPrefix]
+    [HarmonyPatch(nameof(CharSelectController_new.chooseSoundPack))]
+    static bool BeforeChooseSoundPack(CharSelectController_new __instance, int sfx_choice)
     {
-        if (selected)
+        SoundpackManager.CurrentPack = SoundpackManager.soundpacks[sfx_choice];
+        for (int i = 0; i < __instance.all_sfx_buttons.Length; i++)
         {
-            string name = SoundpackManager.VANILLA_SOUNDPACK_NAMES[soundindex];
-            var selectedPack = SoundpackManager.soundpacks.FirstOrDefault(x => x.IsVanilla && x.Name == name);
-            if (selectedPack != null)
-                SoundpackManager.CurrentPack = selectedPack;
+            if (i != sfx_choice)
+            {
+                __instance.all_sfx_buttons[i].deselectBtn();
+            }
         }
+        return sfx_choice < __instance.all_sfx_buttons.Length;
     }
 }

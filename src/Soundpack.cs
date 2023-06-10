@@ -1,12 +1,4 @@
-﻿using BepInEx.Logging;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.IO;
 using UnityEngine;
 
 namespace SoundpackLoader;
@@ -27,6 +19,8 @@ public class Soundpack
 
     public override string ToString() => QualifiedName;
 }
+
+internal record SoundpackInfo(int order, float volume);
 
 internal class SoundpackJsonMetadata
 {

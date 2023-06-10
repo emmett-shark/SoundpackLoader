@@ -2,15 +2,23 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SoundpackLoader;
 
 public class SoundpackManager
 {
     internal static List<Soundpack> soundpacks = new();
-    internal static readonly string[] VANILLA_SOUNDPACK_NAMES = { "default", "bass", "muted", "eightbit", "club", "fart" };
+
+    // Extracted from GameController.loadSoundBundleResources
+    internal static readonly Dictionary<string, SoundpackInfo> VANILLA_SOUNDPACK_INFO = new Dictionary<string, SoundpackInfo>
+    {
+        ["default"] = new SoundpackInfo(0, 1f),
+        ["bass"] = new SoundpackInfo(1, 0.72f),
+        ["muted"] = new SoundpackInfo(2, 0.34f),
+        ["eightbit"] = new SoundpackInfo(3, 0.25f),
+        ["club"] = new SoundpackInfo(4, 0.25f),
+        ["fart"] = new SoundpackInfo(5, 0.75f)
+    };
 
     internal static Soundpack _currentPack = new(); // initialized to vanilla:default once it's loaded
     public static Soundpack CurrentPack

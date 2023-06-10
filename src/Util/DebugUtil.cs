@@ -11,7 +11,7 @@ namespace SoundpackLoader;
 
 internal class DebugUtil
 {
-    public static void Dump(object? obj, LogLevel level = LogLevel.Info, [CallerArgumentExpression(nameof(obj))] string objExpression = "<unknown>")
+    public static void Dump(object? obj, LogLevel level = LogLevel.Info, string objExpression = "<unknown>")
     {
         var options = new JsonSerializerSettings();
         options.Formatting = Formatting.Indented;

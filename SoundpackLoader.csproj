@@ -1,30 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net4.8.1</TargetFramework>
     <AssemblyName>SoundpackLoader</AssemblyName>
+    <BepInExPluginGuid>org.crispykevin.soundpackloader</BepInExPluginGuid>
+    <Version>0.2.0</Version>
     <Description>Loads custom soundpacks</Description>
-    <Version>0.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<Nullable>enable</Nullable>
-	<LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
     <GameFolder>E:\SteamLibrary\steamapps\common\TromboneChamp\</GameFolder>
   </PropertyGroup>
-
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="copy &quot;$(ProjectDir)bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).dll&quot; &quot;$(GameFolder)\BepInEx\plugins&quot;" />
-	</Target>
-	
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
-    <PackageReference Include="TromboneChamp.GameLibs" Version="1.8.9.3" />
+    <PackageReference Include="TromboneChamp.GameLibs" Version="1.11.0" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameFolder)/BepInEx/plugins" />
+  </Target>
+
+  <Target Name="ThunderstoreZip" AfterTargets="Build">
+    <Delete Files="$(OutDir)thunderstore" />
+    <Delete Files="$(SolutionDir)$(ProjectName).zip" />
+    <Copy SourceFiles="icon.png" DestinationFolder="$(OutDir)thunderstore" />
+    <Copy SourceFiles="manifest.json" DestinationFolder="$(OutDir)thunderstore" />
+    <Copy SourceFiles="README.md" DestinationFolder="$(OutDir)thunderstore" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(OutDir)thunderstore" />
+    <ZipDirectory DestinationFile="$(SolutionDir)$(ProjectName).zip" SourceDirectory="$(OutDir)thunderstore" />
+  </Target>
 </Project>

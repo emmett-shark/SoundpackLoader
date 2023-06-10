@@ -1,0 +1,9 @@
+{
+    "name": "SoundpackLoader",
+    "description": "Loads custom soundpacks",
+    "version_number": "0.2.0",
+    "dependencies": [
+      "BepInEx-BepInExPack_TromboneChamp-5.4.21"
+    ],
+    "website_url": "https://github.com/emmett-shark/SoundpackLoader/"
+}
