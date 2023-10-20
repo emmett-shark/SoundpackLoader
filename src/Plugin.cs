@@ -130,6 +130,7 @@ internal class GameControllerPatch
     static bool PatchOutSoundBundleResources(GameController __instance, ref IEnumerator __result)
     {
         __result = EmptyIEnumerator();
+        __instance.fixAudioMixerStuff();
         return false;
     }
 
