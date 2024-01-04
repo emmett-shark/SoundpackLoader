@@ -34,7 +34,6 @@ internal class Plugin : BaseUnityPlugin
         new Harmony(PluginInfo.PLUGIN_GUID).PatchAll();
 
         Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} v{PluginInfo.PLUGIN_VERSION} is loaded!");
-        SoundpackManager.SoundpackChanged += (_, e) => Logger.LogInfo($"{SelectedIdx.Value}. {e.NewPack}");
     }
 
     void Start()
@@ -49,7 +48,9 @@ internal class Plugin : BaseUnityPlugin
             int idx = SoundpackManager.soundpacks.IndexOf(e.NewPack);
             if (idx != -1)
                 SelectedIdx.Value = idx;
+            Logger.LogInfo($"{SelectedIdx.Value}. {e.NewPack}");
         };
+        SoundpackManager.CurrentPack = SoundpackManager.soundpacks[SelectedIdx.Value];
     }
 
     void LoadVanillaSoundpacks()

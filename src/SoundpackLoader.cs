@@ -2,16 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine.Networking;
 using UnityEngine;
 using System.IO;
-using BepInEx.Logging;
-using Newtonsoft.Json;
-using System.Threading;
-using Steamworks;
-using System.ComponentModel;
 
 namespace SoundpackLoader;
 

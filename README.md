@@ -8,6 +8,10 @@ Upon launching the game, a CustomSoundpacks folder should appear in the BepInEx 
 
 The current interface is a bit rough -- on the "Choose Yer Tromboner" screen, the selected soundpack is written at the top of the screen. Cycle through soundpacks using PageUp and PageDown. You can also cycle through soundpacks while playing a song. The keys can be changed in the config text file in `TromboneChamp\BepInEx\config\org.crispykevin.soundpackloader.cfg`.
 
+### Changelog
+v0.2.2
+- Fix so trombone sound can happen if you skip the character select screen
+
 ### Soundpack structure
 Making a soundpack is simple. It's just fifteen audio files of the notes of the C major scale, from C1 to C3. Additionally, some information about the pack is given in a special text format (JSON).
 
