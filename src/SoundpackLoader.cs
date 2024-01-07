@@ -72,7 +72,7 @@ public class SoundpackLoader : MonoBehaviour
 
         var audType = EXTENSION_TO_AUD_TYPE.GetValueOrDefault(fileInfo.Extension.ToLower(), AudioType.UNKNOWN);
 
-        string uri = @"file:\\" + fileInfo.FullName;
+        string uri = @"file://" + fileInfo.FullName;
         using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(uri, audType))
         {
             ((DownloadHandlerAudioClip)www.downloadHandler).streamAudio = false;

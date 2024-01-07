@@ -3,7 +3,7 @@
     <TargetFramework>net4.8.1</TargetFramework>
     <AssemblyName>SoundpackLoader</AssemblyName>
     <BepInExPluginGuid>org.crispykevin.soundpackloader</BepInExPluginGuid>
-    <Version>0.2.2</Version>
+    <Version>0.2.3</Version>
     <Description>Loads custom soundpacks</Description>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
