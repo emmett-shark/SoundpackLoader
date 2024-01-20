@@ -58,13 +58,6 @@ public class SoundpackManager
         Plugin.Loader.LoadSoundpack(dir, AddPack, err => Plugin.Logger.LogWarning($"Failed to load pack from {dir.Name}: {err}"));
     }
 
-    /// <summary>
-    /// See <see cref="LoadPack(DirectoryInfo)"/>.
-    /// </summary>
-    public static void LoadPack(string directoryPath)
-    {
-        LoadPack(new DirectoryInfo(directoryPath));
-    }
     public static Soundpack? RemovePack(string nmspace, string name)
     {
         int idx = soundpacks.FindIndex(p => p.Namespace == nmspace && p.Name == name);
@@ -107,9 +100,10 @@ public class SoundpackManager
     /// <param name="soundpack">New <c>Soundpack</c> to use</param>
     public static void ChangePack(GameController gc, Soundpack soundpack)
     {
+        CurrentPack = soundpack;
+        if (soundpack.IsVanilla) return;
         gc.trombclips.tclips = soundpack.Notes;
         gc.trombvol_default = gc.trombvol_current = gc.currentnotesound.volume = soundpack.VolumeModifier;
-        CurrentPack = soundpack;
     }
 
     internal static void OnSoundpackChanged(Soundpack newPack, Soundpack oldPack)

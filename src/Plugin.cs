@@ -4,9 +4,7 @@ using BepInEx.Logging;
 using HarmonyLib;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -39,9 +37,9 @@ internal class Plugin : BaseUnityPlugin
     void Start()
     {
         Loader = this.gameObject.AddComponent<SoundpackLoader>();
-
         LoadVanillaSoundpacks();
         LoadCustomSoundpacks();
+        SoundpackManager.CurrentPack = SoundpackManager.soundpacks[0];
 
         SoundpackManager.SoundpackChanged += (_, e) =>
         {
@@ -50,56 +48,20 @@ internal class Plugin : BaseUnityPlugin
                 SelectedIdx.Value = idx;
             Logger.LogInfo($"{SelectedIdx.Value}. {e.NewPack}");
         };
-        SoundpackManager.CurrentPack = SoundpackManager.soundpacks[SelectedIdx.Value];
     }
 
     void LoadVanillaSoundpacks()
     {
         Logger.LogInfo("Loading vanilla soundpacks...");
-        var info = new DirectoryInfo(Path.Combine(Application.streamingAssetsPath, "soundpacks"));
-        // ["soundpackbass", "soundpackdefault"] turns into [{Name: "bass", BundlePath: @"C:\Whatever"}, etc.]
-        var bundles = info.GetFiles()
-            .Where(file => file.Extension == "") // ignore .manifest files
-            .Select(file => new
-            {
-                Name = file.Name.Substring("soundpack".Length),
-                BundlePath = file.FullName
-            })
-            .OrderBy(i => SoundpackManager.VANILLA_SOUNDPACK_INFO.ContainsKey(i.Name)
-                ? SoundpackManager.VANILLA_SOUNDPACK_INFO[i.Name].order : int.MaxValue);
 
-        // Must do this sequentially or Unity will error out
-        foreach (var b in bundles)
+        foreach (var soundpackInfo in SoundpackManager.VANILLA_SOUNDPACK_INFO)
         {
-            var bundle = AssetBundle.LoadFromFile(b.BundlePath);
-            if (bundle == null)
+            SoundpackManager.AddPack(new Soundpack()
             {
-                Logger.LogWarning($"Failed to load asset bundle: {b.Name}");
-                continue;
-            }
-            var gamePack = bundle
-                .LoadAsset<GameObject>("soundpack" + b.Name)
-                .GetComponent<AudioClipsTromb>();
-
-            var soundpackCopy = new Soundpack()
-            {
-                Name = b.Name,
+                Name = soundpackInfo.Key,
                 Namespace = "vanilla",
-                VolumeModifier = SoundpackManager.VANILLA_SOUNDPACK_INFO.ContainsKey(b.Name)
-                    ? SoundpackManager.VANILLA_SOUNDPACK_INFO[b.Name].volume : 1.0f,
-                Directory = info
-            };
-
-            // Copy vanilla audio clips to new ones
-            var buf = new float[gamePack.tclips.Max(clip => clip.samples * clip.channels)];
-            for (int i = 0; i < gamePack.tclips.Length; i++)
-            {
-                var origClip = gamePack.tclips[i];
-                soundpackCopy.Notes[i] = AudioUtil.CloneAudioClip(origClip, buf);
-            }
-            SoundpackManager.AddPack(soundpackCopy);
-
-            bundle.Unload(true);
+                VolumeModifier = soundpackInfo.Value.volume
+            });
         }
     }
 
@@ -113,7 +75,6 @@ internal class Plugin : BaseUnityPlugin
             SoundpackManager.LoadPack(dir);
     }
 }
-
 
 [HarmonyPatch(typeof(GameController))]
 internal class GameControllerPatch
@@ -130,9 +91,13 @@ internal class GameControllerPatch
     [HarmonyPatch(nameof(GameController.loadSoundBundleResources))]
     static bool PatchOutSoundBundleResources(GameController __instance, ref IEnumerator __result)
     {
-        __result = EmptyIEnumerator();
-        __instance.fixAudioMixerStuff();
-        return false;
+        if (!SoundpackManager.CurrentPack.IsVanilla)
+        {
+            __result = EmptyIEnumerator();
+            __instance.fixAudioMixerStuff();
+            return false;
+        }
+        return true;
     }
 
     [HarmonyPostfix]
