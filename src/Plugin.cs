@@ -37,8 +37,8 @@ internal class Plugin : BaseUnityPlugin
     void Start()
     {
         Loader = this.gameObject.AddComponent<SoundpackLoader>();
-        LoadVanillaSoundpacks();
-        LoadCustomSoundpacks();
+        StartCoroutine(LoadVanillaSoundpacks());
+        StartCoroutine(LoadCustomSoundpacks());
         SoundpackManager.CurrentPack = SoundpackManager.soundpacks[0];
 
         SoundpackManager.SoundpackChanged += (_, e) =>
@@ -50,7 +50,7 @@ internal class Plugin : BaseUnityPlugin
         };
     }
 
-    void LoadVanillaSoundpacks()
+    IEnumerator LoadVanillaSoundpacks()
     {
         Logger.LogInfo("Loading vanilla soundpacks...");
 
@@ -63,9 +63,10 @@ internal class Plugin : BaseUnityPlugin
                 VolumeModifier = soundpackInfo.Value.volume
             });
         }
+        yield return null;
     }
 
-    void LoadCustomSoundpacks()
+    IEnumerator LoadCustomSoundpacks()
     {
         Logger.LogInfo("Loading custom soundpacks...");
         var dirs = new DirectoryInfo(Path.Combine(Paths.BepInExRootPath, "CustomSoundpacks"))
@@ -73,6 +74,7 @@ internal class Plugin : BaseUnityPlugin
 
         foreach (var dir in dirs)
             SoundpackManager.LoadPack(dir);
+        yield return null;
     }
 }
 
