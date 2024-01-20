@@ -9,8 +9,7 @@ using System.IO;
 namespace SoundpackLoader;
 
 /// <summary>
-/// Asynchronously loads custom soundpacks using Unity coroutines. Can be used for advanced custom loading behaviour, but most likely you
-/// want <seealso cref="SoundpackManager.LoadPack(DirectoryInfo)"/> instead.
+/// Asynchronously loads custom soundpacks using Unity coroutines
 /// </summary>
 public class SoundpackLoader : MonoBehaviour
 {
@@ -19,16 +18,13 @@ public class SoundpackLoader : MonoBehaviour
     /// In the background, the note audio files will be loaded.
     /// </summary>
     /// <param name="dir">Directory to load soundpack from.</param>
-    /// <param name="onLoadCompleted">Callback to run when loading is successfully completed.</param>
-    /// <param name="onLoadFailed">Callback to run when loading fails.</param>
-    /// <returns>A partially-loaded soundpack (contains no note audio clips!)</returns>
-    public Soundpack? LoadSoundpack(DirectoryInfo dir, Action<Soundpack>? onLoadCompleted = null, Action<string>? onLoadFailed = null)
+    public IEnumerator LoadSoundpack(DirectoryInfo dir)
     {
         var jsonFile = dir.GetFiles("*.json").FirstOrDefault();
         if (jsonFile == null)
         {
             Plugin.Logger.LogWarning($"No JSON file in soundpack directory: {dir.FullName}");
-            return null;
+            yield break;
         }
 
         // Load metadata from .json file
@@ -36,7 +32,7 @@ public class SoundpackLoader : MonoBehaviour
         if (metadata == null)
         {
             Plugin.Logger.LogWarning($"Failed to read JSON file: {jsonFile.FullName}");
-            return null;
+            yield break;
         }
 
         if (metadata.SoundpackFormatRevision == -1)
@@ -53,14 +49,10 @@ public class SoundpackLoader : MonoBehaviour
         };
 
         // Load notes from .ogg/.wav files
-        StartCoroutine(LoadNoteAudioFilesCoroutine(soundpack, onLoadCompleted, onLoadFailed));
-        return soundpack;
+        StartCoroutine(LoadNoteAudioFilesCoroutine(soundpack));
+        yield return null;
     }
 
-    private IEnumerator GetAudioClipCoroutine(string path, Action<AudioClip> onSuccess, Action<string> onError)
-    {
-        return GetAudioClipCoroutine(new FileInfo(path), onSuccess, onError);
-    }
     private IEnumerator GetAudioClipCoroutine(FileInfo fileInfo, Action<AudioClip> onSuccess, Action<string> onError)
     {
         Dictionary<string, AudioType> EXTENSION_TO_AUD_TYPE = new Dictionary<string, AudioType>()
@@ -91,12 +83,11 @@ public class SoundpackLoader : MonoBehaviour
         }
     }
 
-    private IEnumerator LoadNoteAudioFilesCoroutine(Soundpack soundpack, Action<Soundpack>? onCompleted, Action<string>? onFailed)
+    private IEnumerator LoadNoteAudioFilesCoroutine(Soundpack soundpack)
     {
         var NOTE_NAMES = new string[] { "C1", "D1", "E1", "F1", "G1", "A1", "B1", "C2", "D2", "E2", "F2", "G2", "A2", "B2", "C3" };
         int numLoadedClips = 0;
         bool isWaiting = false;
-        string? errorMsg = null;
 
         Plugin.Logger.LogInfo(soundpack.QualifiedName);
 
@@ -110,8 +101,6 @@ public class SoundpackLoader : MonoBehaviour
             if (noteFile == null)
             {
                 string err = $"Audio file not found for note {noteName} in soundpack {soundpack.QualifiedName}";
-                if (onFailed != null)
-                    onFailed(err);
                 Plugin.Logger.LogWarning(err);
                 yield break;
             }
@@ -126,23 +115,18 @@ public class SoundpackLoader : MonoBehaviour
                     {
                         // Done loading all notes, add soundpack
                         Plugin.Logger.LogInfo($"Successfully loaded soundpack: {soundpack.QualifiedName}");
-                        if (onCompleted != null)
-                            onCompleted(soundpack);
+                        SoundpackManager.AddPack(soundpack);
                     }
                     isWaiting = false;
                 },
                 onError: err => 
                 {
                     string errorMsg = $"Error loading note {noteName} in soundpack {soundpack.QualifiedName}: {err}";
-                    if (onFailed != null)
-                        onFailed(errorMsg);
                     Plugin.Logger.LogWarning(errorMsg);
                 }
             ));
             isWaiting = true;
 
-            if (errorMsg != null)
-                yield break;
             yield return null;
         }
 

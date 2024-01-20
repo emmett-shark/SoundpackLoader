@@ -72,7 +72,7 @@ internal class Plugin : BaseUnityPlugin
             .EnumerateDirectories();
 
         foreach (var dir in dirs)
-            SoundpackManager.LoadPack(dir);
+            StartCoroutine(Loader.LoadSoundpack(dir));
     }
 }
 

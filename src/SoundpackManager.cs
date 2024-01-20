@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace SoundpackLoader;
@@ -46,17 +45,6 @@ public class SoundpackManager
     }
     public static void AddPack(Soundpack pack) => soundpacks.Add(pack);
     public static bool RemovePack(Soundpack pack) => soundpacks.Remove(pack);
-
-    /// <summary>
-    /// <para>Begins loading the soundpack in the given directory.</para>
-    /// <para>On success, the pack is added to the custom pack registry. On failure, no action is taken.</para>
-    /// <para>For more control, see <seealso cref="SoundpackLoader.LoadSoundpack"/></para>
-    /// </summary>
-    /// <param name="dir"></param>
-    public static void LoadPack(DirectoryInfo dir)
-    {
-        Plugin.Loader.LoadSoundpack(dir, AddPack, err => Plugin.Logger.LogWarning($"Failed to load pack from {dir.Name}: {err}"));
-    }
 
     public static Soundpack? RemovePack(string nmspace, string name)
     {
