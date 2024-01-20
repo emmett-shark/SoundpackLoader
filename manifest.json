@@ -1,7 +1,7 @@
 {
     "name": "SoundpackLoader",
     "description": "Loads custom soundpacks",
-    "version_number": "0.2.4",
+    "version_number": "0.2.5",
     "dependencies": [
       "BepInEx-BepInExPack_TromboneChamp-5.4.21"
     ],

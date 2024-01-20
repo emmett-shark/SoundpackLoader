@@ -50,6 +50,7 @@ public class SoundpackLoader : MonoBehaviour
 
         // Load notes from .ogg/.wav files
         StartCoroutine(LoadNoteAudioFilesCoroutine(soundpack));
+        SoundpackManager.AddPack(soundpack);
         yield return null;
     }
 
@@ -115,7 +116,6 @@ public class SoundpackLoader : MonoBehaviour
                     {
                         // Done loading all notes, add soundpack
                         Plugin.Logger.LogInfo($"Successfully loaded soundpack: {soundpack.QualifiedName}");
-                        SoundpackManager.AddPack(soundpack);
                     }
                     isWaiting = false;
                 },
