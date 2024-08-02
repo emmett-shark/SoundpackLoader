@@ -18,6 +18,7 @@ internal class Plugin : BaseUnityPlugin
     public static ConfigEntry<KeyCode> CycleForwards = null!;
     public static ConfigEntry<KeyCode> CycleBackwards = null!;
     public static ConfigEntry<int> SelectedIdx = null!;
+    public static string CustomSoundpacksPath = Path.Combine(Paths.BepInExRootPath, "CustomSoundpacks");
 
     public Plugin()
     {
@@ -68,11 +69,14 @@ internal class Plugin : BaseUnityPlugin
     void LoadCustomSoundpacks()
     {
         Logger.LogInfo("Loading custom soundpacks...");
-        var dirs = new DirectoryInfo(Path.Combine(Paths.BepInExRootPath, "CustomSoundpacks"))
-            .EnumerateDirectories();
-
-        foreach (var dir in dirs)
-            StartCoroutine(Loader.LoadSoundpack(dir));
+        var di = new DirectoryInfo(CustomSoundpacksPath);
+        if (!di.Exists) Directory.CreateDirectory(CustomSoundpacksPath);
+        if (di.Exists)
+        {
+            var dirs = di.EnumerateDirectories();
+            foreach (var dir in dirs)
+                StartCoroutine(Loader.LoadSoundpack(dir));
+        }
     }
 }
 

@@ -3,12 +3,16 @@
 An early WIP mod for loading custom soundpacks into the game.
 
 # For users
-Download SoundpackLoader.dll from [here](https://github.com/emmett-shark/SoundpackLoader/releases/latest) and drop it in your plugins folder.
-Upon launching the game, a CustomSoundpacks folder should appear in the BepInEx folder. Put your soundpacks there and relaunch.
+Download SoundpackLoader from [here](https://thunderstore.io/c/trombone-champ/p/emmett/SoundpackLoader/)
+Upon launching the game, a CustomSoundpacks folder should appear in the BepInEx folder. If it didn't, make the folder yourself. Put your soundpacks there and relaunch.
 
 The current interface is a bit rough -- on the "Choose Yer Tromboner" screen, the selected soundpack is written at the top of the screen. Cycle through soundpacks using PageUp and PageDown. You can also cycle through soundpacks while playing a song. The keys can be changed in the config text file in `TromboneChamp\BepInEx\config\org.crispykevin.soundpackloader.cfg`.
 
 ### Changelog
+v0.2.6
+- Don't delete trombone sound if no CustomSoundpacks
+- Actually create the CustomSoundpacks folder
+
 v0.2.5
 - Serialize json async
 

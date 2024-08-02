@@ -3,12 +3,11 @@
     <TargetFramework>net4.8.1</TargetFramework>
     <AssemblyName>SoundpackLoader</AssemblyName>
     <BepInExPluginGuid>org.crispykevin.soundpackloader</BepInExPluginGuid>
-    <Version>0.2.5</Version>
+    <Version>0.2.6</Version>
     <Description>Loads custom soundpacks</Description>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <GameFolder>E:\SteamLibrary\steamapps\common\TromboneChamp\</GameFolder>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,7 +23,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameFolder)/BepInEx/plugins" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)/BepInEx/plugins" />
   </Target>
 
   <Target Name="ThunderstoreZip" AfterTargets="Build">
